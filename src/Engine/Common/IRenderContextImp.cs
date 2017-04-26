@@ -286,12 +286,26 @@ namespace Fusee.Engine.Common
         void Clear(ClearFlags flags);
 
         /// <summary>
+        /// Should allocate memory for the specified attribute, and be able to perform it dynamically via glBufferSubData.
+        /// </summary>
+        /// <param name="ia">The attribute which holds the buffer object id.</param>
+        /// <param name="allData">The complete list of data, not only the lastly added ones.</param>
+        /// <param name="arrayOffset">A pointer index to the place where new data is stored.</param>
+        void SetInstanceAttributes(IInstanceAttributesImp ia, List<float3> allData, int arrayOffset = 0);
+
+        /// <summary>
         /// Binds the vertices onto the GL Rendercontext and assigns an VertexBuffer index to the passed <see cref="IMeshImp" /> instance.
         /// </summary>
         /// <param name="mesh">The <see cref="IMeshImp" /> instance.</param>
         /// <param name="vertices">The vertices.</param>
         /// <exception cref="System.ArgumentException">Vertices must not be null or empty</exception>
         void SetVertices(IMeshImp mesh, float3[] vertices);
+
+        void SetVerticesDynamically(IMeshImp mesh, int offset, List<float3> vertices);
+        void SetNormalsDynamically(IMeshImp mesh, int offset, List<float3> normals);
+        void SetColorsDynamically(IMeshImp mesh, int offset, List<uint> colors);
+        void SetUVsDynamically(IMeshImp mesh, int offset, List<float2> uvs);
+        void SetTrianglesDynamically(IMeshImp mesh, int offset, List<ushort> triangles);
 
         /// <summary>
         /// Binds the normals onto the GL Rendercontext and assigns an NormalBuffer index to the passed <see cref="IMeshImp" /> instance.
@@ -424,6 +438,21 @@ namespace Fusee.Engine.Common
         void Render(IMeshImp mr);
 
         /// <summary>
+        /// Renders multiple points, considering the vertices stored in attribHandle.
+        /// </summary>
+        /// <param name="attribHandle">Holds the buffer object where vertices are stored.</param>
+        /// <param name="count">Specifies the number of points to be rendered.</param>
+        void RenderAsPoints(IInstanceAttributesImp ia, int count);
+
+        /// <summary>
+        /// Same as Render, but with a different function: glDrawElementsInstanced().
+        /// </summary>
+        /// <param name="meshImp">The mesh that should be rendered.</param>
+        /// <param name="ia">The attribute that should be provided for each instance.</param>
+        /// <param name="count">The number of instances to render.</param>
+        void RenderAsInstance(IMeshImp meshImp, IInstanceAttributesImp ia, int count);
+
+        /// <summary>
         /// Draws a Debug Line in 3D Space by using a start and end point (float3).
         /// </summary>
         /// <param name="start">The startpoint of the DebugLine.</param>
@@ -443,6 +472,13 @@ namespace Fusee.Engine.Common
         /// </summary>
         /// <returns>The <see cref="IMeshImp" /> instance.</returns>
         IMeshImp CreateMeshImp();
+
+        /// <summary>
+        /// Creates an instance of attributes instance.
+        /// </summary>
+        /// <returns>The <see cref="IInstanceAttributesImp"/> instance.</returns>
+        IInstanceAttributesImp CreateInstanceAttrImp();
+
         /// <summary>
         /// Sets the specified render state to the given setting.
         /// </summary>

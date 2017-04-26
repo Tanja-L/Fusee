@@ -1553,6 +1553,107 @@ namespace Fusee.Engine.Core
             _rci.Render(m._meshImp);
         }
 
+        /// <summary>
+        /// Renders the meshes by dynamically allocating memory.
+        /// </summary>
+        /// <param name="m">The dynamic mesh to render.</param>
+        public void Render(DynamicMesh m)
+        {
+            if (m._meshImp == null)
+                m._meshImp = _rci.CreateMeshImp();
+
+            if(m.HasChanged())
+            {
+                if(m.GetColors().Count != 0)
+                    _rci.SetColorsDynamically(m._meshImp, m.GetColorsOffset(), m.GetColors());
+
+                if (m.GetVertices().Count != 0)
+                    _rci.SetVerticesDynamically(m._meshImp, m.GetVerticesOffset(), m.GetVertices());
+
+                if (m.GetUVs().Count != 0)
+                    _rci.SetUVsDynamically(m._meshImp, m.GetUVsOffset(), m.GetUVs());
+
+                if (m.GetNormals().Count != 0)
+                    _rci.SetNormalsDynamically(m._meshImp, m.GetNormalsOffset(), m.GetNormals());
+
+                if (m.GetTriangles().Count != 0)
+                    _rci.SetTrianglesDynamically(m._meshImp, m.GetTrianglesOffset(), m.GetTriangles());
+
+                m.Update();
+            }
+
+            _rci.Render(m._meshImp);
+        }
+
+        /// <summary>
+        /// Renders the vertices stored in the instance attributes.
+        /// </summary>
+        /// <param name="attribHandle">Holds the vertex buffer object.</param>
+        public void RenderAsPoints(InstanceAttributes ia)
+        {
+            if (ia._iaImp == null)
+                ia._iaImp = _rci.CreateInstanceAttrImp();
+
+            if (ia.HasChanged())
+            {
+                _rci.SetInstanceAttributes(ia._iaImp, ia.GetOffsets(), ia.GetIndexOfLastChanges());
+                ia.Update();
+            }
+
+            // --- 3. Render Instance with attributes
+
+            _rci.RenderAsPoints(ia._iaImp, ia.GetCount());
+        }
+
+        /// <summary>
+        /// Renders the specified mesh multiple times, depending on the length of the attributes array of the InstanceAttributes.
+        /// </summary>
+        /// <param name="m">The mesh that should be rendered.</param>
+        /// <param name="ia">Object which defines how each instance of the mesh should be rendered.</param>
+        public void RenderAsInstance(Mesh m, InstanceAttributes ia)
+        {
+            // --- 1. Initialize mesh if needed
+
+            if (m._meshImp == null)
+                m._meshImp = _rci.CreateMeshImp();
+
+            if (m.Colors != null && m.Colors.Length != 0 && !m.ColorsSet)
+                _rci.SetColors(m._meshImp, m.Colors);
+
+            if (m.Vertices != null && m.Vertices.Length != 0 && !m.VerticesSet)
+                _rci.SetVertices(m._meshImp, m.Vertices);
+
+            if (m.UVs != null && m.UVs.Length != 0 && !m.UVsSet)
+                _rci.SetUVs(m._meshImp, m.UVs);
+
+            if (m.Normals != null && m.Normals.Length != 0 && !m.NormalsSet)
+                _rci.SetNormals(m._meshImp, m.Normals);
+
+            if (m.BoneIndices != null && m.BoneIndices.Length != 0 && !m.BoneIndicesSet)
+                _rci.SetBoneIndices(m._meshImp, m.BoneIndices);
+
+            if (m.BoneWeights != null && m.BoneWeights.Length != 0 && !m.BoneWeightsSet)
+                _rci.SetBoneWeights(m._meshImp, m.BoneWeights);
+
+            if (m.Triangles != null && m.Triangles.Length != 0 && !m.TrianglesSet)
+                _rci.SetTriangles(m._meshImp, m.Triangles);
+
+            // --- 2. Initialize instance attributes if needed
+
+            if (ia._iaImp == null)
+                ia._iaImp = _rci.CreateInstanceAttrImp();
+
+            if (ia.HasChanged())
+            {
+                _rci.SetInstanceAttributes(ia._iaImp, ia.GetOffsets(), ia.GetIndexOfLastChanges());
+                ia.Update();
+            }
+
+            // --- 3. Render Instance with attributes
+
+            _rci.RenderAsInstance(m._meshImp, ia._iaImp, ia.GetCount());
+        }
+
         #endregion
 
         #region Other Members
@@ -1565,7 +1666,7 @@ namespace Fusee.Engine.Core
         /// <param name="m">The mesh of which buffers should be deallocated from the memory.</param>
         public void Remove(Mesh m)
         {
-            if (m._meshImp == null)
+            if (m == null || m._meshImp == null)
                 return;
 
             _rci.RemoveVertices(m._meshImp);

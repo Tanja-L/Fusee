@@ -40,12 +40,15 @@
          /// The boneindex attribute name.
          /// </summary>
          public static readonly string BoneIndexAttribName = "fuBoneIndex";
-
-
          /// <summary>
-         /// The vertex attribute location index.
+         /// The instance attribute name
          /// </summary>
-         public static readonly int VertexAttribLocation = 0;
+         public static readonly string OffsetAttribName = "fuOffset";
+
+        /// <summary>
+        /// The vertex attribute location index.
+        /// </summary>
+        public static readonly int VertexAttribLocation = 0;
          /// <summary>
          /// The color attribute location index.
          /// </summary>
@@ -74,7 +77,11 @@
          /// The boneindex attribute location index.
          /// </summary>
          public static readonly int BoneIndexAttribLocation = 7;
+         /// <summary>
+         /// The instance attribute location index.
+         /// </summary>
+         public static readonly int OffsetAttribLocation = 8;
 
-         #endregion
-     }
+        #endregion
+    }
  }

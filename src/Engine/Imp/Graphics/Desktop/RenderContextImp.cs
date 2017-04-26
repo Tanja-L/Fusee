@@ -11,6 +11,7 @@ using OpenTK;
 using OpenTK.Graphics.OpenGL;
 using Fusee.Math.Core;
 using Fusee.Engine.Common;
+using System.Linq;
 
 namespace Fusee.Engine.Imp.Graphics.Desktop
 {
@@ -41,7 +42,7 @@ namespace Fusee.Engine.Imp.Graphics.Desktop
             // TODO - implement this in render states!!!
 
             GL.CullFace(CullFaceMode.Back);
-
+            
             // _sharpFont = new Library();
         }
 
@@ -759,6 +760,7 @@ namespace Fusee.Engine.Imp.Graphics.Desktop
             GL.BindAttribLocation(program, Helper.BoneIndexAttribLocation, Helper.BoneIndexAttribName);
             GL.BindAttribLocation(program, Helper.BoneWeightAttribLocation, Helper.BoneWeightAttribName);
             GL.BindAttribLocation(program, Helper.BitangentAttribLocation, Helper.BitangentAttribName);
+            GL.BindAttribLocation(program, Helper.OffsetAttribLocation, Helper.OffsetAttribName);
 
             GL.LinkProgram(program); // AAAARRRRRGGGGHHHH!!!! Must be called AFTER BindAttribLocation
             return new ShaderProgramImp {Program = program};
@@ -834,6 +836,63 @@ namespace Fusee.Engine.Imp.Graphics.Desktop
             }
         }
 
+        /// <summary>
+        /// Should allocate memory for the specified attribute, and be able to perform it dynamically via glBufferSubData.
+        /// </summary>
+        /// <param name="ia">The attribute which holds the buffer object id.</param>
+        /// <param name="allData">The complete list of data, not only the lastly added ones.</param>
+        /// <param name="arrayOffset">A pointer index to the place where new data is stored.</param>
+        public void SetInstanceAttributes(IInstanceAttributesImp ia, List<float3> allData, int arrayOffset = 0)
+        {
+            /*
+            if (data == null || data.Length == 0)
+            {
+                throw new ArgumentException("float3 data must not be null or empty");
+            }*/
+
+            // create buffer if needed
+
+            if (((InstanceAttributesImp)ia).OffsetBufferObject == 0)
+                GL.GenBuffers(1, out ((InstanceAttributesImp)ia).OffsetBufferObject);
+
+            // set target to buffer object
+
+            GL.BindBuffer(BufferTarget.ArrayBuffer, ((InstanceAttributesImp)ia).OffsetBufferObject);
+
+            // does memory need to be reallocated?
+
+            int bufferSize;
+            GL.GetBufferParameter(BufferTarget.ArrayBuffer, BufferParameterName.BufferSize, out bufferSize);
+
+            int dataSize = (allData.Count - arrayOffset) * 3 * sizeof(float);
+            int fullDataSize = allData.Count * 3 * sizeof(float);
+
+            if (bufferSize == 0)
+            {
+                GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr)(dataSize * 1.5f), (IntPtr)null, BufferUsageHint.DynamicDraw);
+                GL.BufferSubData(BufferTarget.ArrayBuffer, (IntPtr)0, fullDataSize, allData.ToArray());
+            }
+            else if (fullDataSize > bufferSize)
+            {
+                GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr)(fullDataSize * 1.5f), (IntPtr)null, BufferUsageHint.DynamicDraw);
+                GL.BufferSubData(BufferTarget.ArrayBuffer, (IntPtr)0, fullDataSize, allData.ToArray());
+            }
+            else
+            {
+                float3[] addedData = allData.Skip(arrayOffset).ToArray();
+                int offsetBytes = arrayOffset * 3 * sizeof(float);
+                GL.BufferSubData(BufferTarget.ArrayBuffer, (IntPtr)(offsetBytes), dataSize, addedData);
+            }
+            /*
+            int vboBytes;
+            GL.GetBufferParameter(BufferTarget.ArrayBuffer, BufferParameterName.BufferSize, out vboBytes);
+
+            if (vboBytes != dataBytes)
+                throw new ApplicationException(String.Format(
+                    "Problem uploading vertex buffer to VBO (offsets). Tried to upload {0} bytes, uploaded {1}.",
+                    dataBytes, vboBytes));*/
+            GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+        }
 
         /// <summary>
         /// Binds the vertices onto the GL Rendercontext and assigns an VertexBuffer index to the passed <see cref="IMeshImp" /> instance.
@@ -864,8 +923,218 @@ namespace Fusee.Engine.Imp.Graphics.Desktop
             GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
         }
 
+        public void SetVerticesDynamically(IMeshImp mr, int offset, List<float3> data)
+        {
+            if (data == null || data.Count == 0)
+            {
+                throw new ArgumentException("Vertices must not be null or empty");
+            }
 
-        
+            if (((MeshImp)mr).VertexBufferObject == 0)
+                GL.GenBuffers(1, out ((MeshImp)mr).VertexBufferObject);
+
+            // set target to buffer object
+
+            GL.BindBuffer(BufferTarget.ArrayBuffer, ((MeshImp)mr).VertexBufferObject);
+
+            // does memory need to be reallocated?
+
+            int bufferSize;
+            GL.GetBufferParameter(BufferTarget.ArrayBuffer, BufferParameterName.BufferSize, out bufferSize);
+
+            int dataSize = (data.Count - offset) * 3 * sizeof(float);
+            int fullDataSize = data.Count * 3 * sizeof(float);
+
+            if (bufferSize == 0)
+            {
+                GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr)(dataSize * 1.5f), (IntPtr)null, BufferUsageHint.DynamicDraw);
+                GL.BufferSubData(BufferTarget.ArrayBuffer, (IntPtr)0, fullDataSize, data.ToArray());
+            }
+            else if (fullDataSize > bufferSize)
+            {
+                GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr)(fullDataSize * 1.5f), (IntPtr)null, BufferUsageHint.DynamicDraw);
+                GL.BufferSubData(BufferTarget.ArrayBuffer, (IntPtr)0, fullDataSize, data.ToArray());
+            }
+            else
+            {
+                float3[] addedData = data.Skip(offset).ToArray();
+                int offsetBytes = offset * 3 * sizeof(float);
+                GL.BufferSubData(BufferTarget.ArrayBuffer, (IntPtr)(offsetBytes), dataSize, addedData);
+            }
+
+            GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+        }
+
+        public void SetNormalsDynamically(IMeshImp mr, int offset, List<float3> data)
+        {
+            if (data == null || data.Count == 0)
+            {
+                throw new ArgumentException("Vertices must not be null or empty");
+            }
+
+            if (((MeshImp)mr).NormalBufferObject == 0)
+                GL.GenBuffers(1, out ((MeshImp)mr).NormalBufferObject);
+
+            // set target to buffer object
+
+            GL.BindBuffer(BufferTarget.ArrayBuffer, ((MeshImp)mr).NormalBufferObject);
+
+            // does memory need to be reallocated?
+
+            int bufferSize;
+            GL.GetBufferParameter(BufferTarget.ArrayBuffer, BufferParameterName.BufferSize, out bufferSize);
+
+            int dataSize = (data.Count - offset) * 3 * sizeof(float);
+            int fullDataSize = data.Count * 3 * sizeof(float);
+
+            if (bufferSize == 0)
+            {
+                GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr)(dataSize * 1.5f), (IntPtr)null, BufferUsageHint.DynamicDraw);
+                GL.BufferSubData(BufferTarget.ArrayBuffer, (IntPtr)0, fullDataSize, data.ToArray());
+            }
+            else if (fullDataSize > bufferSize)
+            {
+                GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr)(fullDataSize * 1.5f), (IntPtr)null, BufferUsageHint.DynamicDraw);
+                GL.BufferSubData(BufferTarget.ArrayBuffer, (IntPtr)0, fullDataSize, data.ToArray());
+            }
+            else
+            {
+                float3[] addedData = data.Skip(offset).ToArray();
+                int offsetBytes = offset * 3 * sizeof(float);
+                GL.BufferSubData(BufferTarget.ArrayBuffer, (IntPtr)(offsetBytes), dataSize, addedData);
+            }
+
+            GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+        }
+
+        public void SetUVsDynamically(IMeshImp mr, int offset, List<float2> data)
+        {
+            if (data == null || data.Count == 0)
+            {
+                throw new ArgumentException("Vertices must not be null or empty");
+            }
+
+            if (((MeshImp)mr).UVBufferObject == 0)
+                GL.GenBuffers(1, out ((MeshImp)mr).UVBufferObject);
+
+            // set target to buffer object
+
+            GL.BindBuffer(BufferTarget.ArrayBuffer, ((MeshImp)mr).UVBufferObject);
+
+            // does memory need to be reallocated?
+
+            int bufferSize;
+            GL.GetBufferParameter(BufferTarget.ArrayBuffer, BufferParameterName.BufferSize, out bufferSize);
+
+            int dataSize = (data.Count - offset) * 2 * sizeof(float);
+            int fullDataSize = data.Count * 2 * sizeof(float);
+
+            if (bufferSize == 0)
+            {
+                GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr)(dataSize * 1.5f), (IntPtr)null, BufferUsageHint.DynamicDraw);
+                GL.BufferSubData(BufferTarget.ArrayBuffer, (IntPtr)0, fullDataSize, data.ToArray());
+            }
+            else if (fullDataSize > bufferSize)
+            {
+                GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr)(fullDataSize * 1.5f), (IntPtr)null, BufferUsageHint.DynamicDraw);
+                GL.BufferSubData(BufferTarget.ArrayBuffer, (IntPtr)0, fullDataSize, data.ToArray());
+            }
+            else
+            {
+                float2[] addedData = data.Skip(offset).ToArray();
+                int offsetBytes = offset * 2 * sizeof(float);
+                GL.BufferSubData(BufferTarget.ArrayBuffer, (IntPtr)(offsetBytes), dataSize, addedData);
+            }
+
+            GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+        }
+
+        public void SetColorsDynamically(IMeshImp mr, int offset, List<uint> data)
+        {
+            if (data == null || data.Count == 0)
+            {
+                throw new ArgumentException("Vertices must not be null or empty");
+            }
+
+            if (((MeshImp)mr).ColorBufferObject == 0)
+                GL.GenBuffers(1, out ((MeshImp)mr).ColorBufferObject);
+
+            // set target to buffer object
+
+            GL.BindBuffer(BufferTarget.ArrayBuffer, ((MeshImp)mr).ColorBufferObject);
+
+            // does memory need to be reallocated?
+
+            int bufferSize;
+            GL.GetBufferParameter(BufferTarget.ArrayBuffer, BufferParameterName.BufferSize, out bufferSize);
+
+            int dataSize = (data.Count - offset) * sizeof(uint);
+            int fullDataSize = data.Count * sizeof(uint);
+
+            if (bufferSize == 0)
+            {
+                GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr)(dataSize * 1.5f), (IntPtr)null, BufferUsageHint.DynamicDraw);
+                GL.BufferSubData(BufferTarget.ArrayBuffer, (IntPtr)0, fullDataSize, data.ToArray());
+            }
+            else if (fullDataSize > bufferSize)
+            {
+                GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr)(fullDataSize * 1.5f), (IntPtr)null, BufferUsageHint.DynamicDraw);
+                GL.BufferSubData(BufferTarget.ArrayBuffer, (IntPtr)0, fullDataSize, data.ToArray());
+            }
+            else
+            {
+                uint[] addedData = data.Skip(offset).ToArray();
+                int offsetBytes = offset * sizeof(uint);
+                GL.BufferSubData(BufferTarget.ArrayBuffer, (IntPtr)(offsetBytes), dataSize, addedData);
+            }
+
+            GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+        }
+
+        public void SetTrianglesDynamically(IMeshImp mr, int offset, List<ushort> data)
+        {
+            if (data == null || data.Count == 0)
+            {
+                throw new ArgumentException("Vertices must not be null or empty");
+            }
+
+            ((MeshImp)mr).NElements = data.Count;
+
+            if (((MeshImp)mr).ElementBufferObject == 0)
+                GL.GenBuffers(1, out ((MeshImp)mr).ElementBufferObject);
+
+            // set target to buffer object
+
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, ((MeshImp)mr).ElementBufferObject);
+
+            // does memory need to be reallocated?
+
+            int bufferSize;
+            GL.GetBufferParameter(BufferTarget.ElementArrayBuffer, BufferParameterName.BufferSize, out bufferSize);
+
+            int dataSize = (data.Count - offset) * sizeof(ushort);
+            int fullDataSize = data.Count * sizeof(ushort);
+
+            if (bufferSize == 0)
+            {
+                GL.BufferData(BufferTarget.ElementArrayBuffer, (IntPtr)(dataSize * 1.5f), (IntPtr)null, BufferUsageHint.DynamicDraw);
+                GL.BufferSubData(BufferTarget.ElementArrayBuffer, (IntPtr)0, fullDataSize, data.ToArray());
+            }
+            else if (fullDataSize > bufferSize)
+            {
+                GL.BufferData(BufferTarget.ElementArrayBuffer, (IntPtr)(fullDataSize * 1.5f), (IntPtr)null, BufferUsageHint.DynamicDraw);
+                GL.BufferSubData(BufferTarget.ElementArrayBuffer, (IntPtr)0, fullDataSize, data.ToArray());
+            }
+            else
+            {
+                ushort[] addedData = data.Skip(offset).ToArray();
+                int offsetBytes = offset * sizeof(ushort);
+                GL.BufferSubData(BufferTarget.ElementArrayBuffer, (IntPtr)(offsetBytes), dataSize, addedData);
+            }
+
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
+        }
+
         /// <summary>
         /// Binds the normals onto the GL Rendercontext and assigns an NormalBuffer index to the passed <see cref="IMeshImp" /> instance.
         /// </summary>
@@ -1258,6 +1527,116 @@ namespace Fusee.Engine.Imp.Graphics.Desktop
         }
 
         /// <summary>
+        /// Renders multiple points, considering the vertices stored in attribHandle.
+        /// </summary>
+        /// <param name="attribHandle">Holds the buffer object where vertices are stored.</param>
+        /// <param name="count">Specifies the number of points to be rendered.</param>
+        public void RenderAsPoints(IInstanceAttributesImp ia, int count)
+        {
+            GL.EnableVertexAttribArray(Helper.VertexAttribLocation);
+            GL.BindBuffer(BufferTarget.ArrayBuffer, ((InstanceAttributesImp)ia).OffsetBufferObject);
+            GL.VertexAttribPointer(Helper.VertexAttribLocation, 3, VertexAttribPointerType.Float, false, 0,
+                IntPtr.Zero);
+            
+            GL.DrawArrays(PrimitiveType.Points, 0, count);
+
+            GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+            GL.DisableVertexAttribArray(Helper.VertexAttribLocation);
+        }
+
+        /// <summary>
+        /// Same as Render, but with a different function: glDrawElementsInstanced().
+        /// </summary>
+        /// <param name="meshImp">The mesh that should be rendered.</param>
+        /// <param name="ia">The attribute that should be provided for each instance.</param>
+        /// <param name="count">The number of instances to render.</param>
+        public void RenderAsInstance(IMeshImp mr, IInstanceAttributesImp ia, int count)
+        {
+            if (((InstanceAttributesImp)ia).OffsetBufferObject != 0)
+            {
+                GL.EnableVertexAttribArray(Helper.OffsetAttribLocation);
+                GL.BindBuffer(BufferTarget.ArrayBuffer, ((InstanceAttributesImp)ia).OffsetBufferObject);
+                GL.VertexAttribPointer(Helper.OffsetAttribLocation, 3, VertexAttribPointerType.Float, false, 0,
+                    IntPtr.Zero);
+                GL.VertexAttribDivisor(Helper.OffsetAttribLocation, 1);
+            }
+            if (((MeshImp)mr).VertexBufferObject != 0)
+            {
+                GL.EnableVertexAttribArray(Helper.VertexAttribLocation);
+                GL.BindBuffer(BufferTarget.ArrayBuffer, ((MeshImp)mr).VertexBufferObject);
+                GL.VertexAttribPointer(Helper.VertexAttribLocation, 3, VertexAttribPointerType.Float, false, 0,
+                    IntPtr.Zero);
+            }
+            if (((MeshImp)mr).ColorBufferObject != 0)
+            {
+                GL.EnableVertexAttribArray(Helper.ColorAttribLocation);
+                GL.BindBuffer(BufferTarget.ArrayBuffer, ((MeshImp)mr).ColorBufferObject);
+                GL.VertexAttribPointer(Helper.ColorAttribLocation, 4, VertexAttribPointerType.UnsignedByte, true, 0,
+                    IntPtr.Zero);
+            }
+
+            if (((MeshImp)mr).UVBufferObject != 0)
+            {
+                GL.EnableVertexAttribArray(Helper.UvAttribLocation);
+                GL.BindBuffer(BufferTarget.ArrayBuffer, ((MeshImp)mr).UVBufferObject);
+                GL.VertexAttribPointer(Helper.UvAttribLocation, 2, VertexAttribPointerType.Float, false, 0, IntPtr.Zero);
+            }
+
+            if (((MeshImp)mr).NormalBufferObject != 0)
+            {
+                GL.EnableVertexAttribArray(Helper.NormalAttribLocation);
+                GL.BindBuffer(BufferTarget.ArrayBuffer, ((MeshImp)mr).NormalBufferObject);
+                GL.VertexAttribPointer(Helper.NormalAttribLocation, 3, VertexAttribPointerType.Float, false, 0,
+                    IntPtr.Zero);
+            }
+            if (((MeshImp)mr).BoneIndexBufferObject != 0)
+            {
+                GL.EnableVertexAttribArray(Helper.BoneIndexAttribLocation);
+                GL.BindBuffer(BufferTarget.ArrayBuffer, ((MeshImp)mr).BoneIndexBufferObject);
+                GL.VertexAttribPointer(Helper.BoneIndexAttribLocation, 4, VertexAttribPointerType.Float, false, 0,
+                    IntPtr.Zero);
+            }
+            if (((MeshImp)mr).BoneWeightBufferObject != 0)
+            {
+                GL.EnableVertexAttribArray(Helper.BoneWeightAttribLocation);
+                GL.BindBuffer(BufferTarget.ArrayBuffer, ((MeshImp)mr).BoneWeightBufferObject);
+                GL.VertexAttribPointer(Helper.BoneWeightAttribLocation, 4, VertexAttribPointerType.Float, false, 0,
+                    IntPtr.Zero);
+            }
+            if (((MeshImp)mr).ElementBufferObject != 0)
+            {
+                GL.BindBuffer(BufferTarget.ElementArrayBuffer, ((MeshImp)mr).ElementBufferObject);
+                GL.DrawElementsInstanced(BeginMode.Triangles, ((MeshImp)mr).NElements, DrawElementsType.UnsignedShort, IntPtr.Zero, count);
+                //GL.DrawArrays(GL.Enums.BeginMode.POINTS, 0, shape.Vertices.Length);
+            }
+            if (((InstanceAttributesImp)ia).OffsetBufferObject != 0)
+            {
+                GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+                GL.DisableVertexAttribArray(Helper.OffsetAttribLocation);
+            }
+            if (((MeshImp)mr).VertexBufferObject != 0)
+            {
+                GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+                GL.DisableVertexAttribArray(Helper.VertexAttribLocation);
+            }
+            if (((MeshImp)mr).ColorBufferObject != 0)
+            {
+                GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+                GL.DisableVertexAttribArray(Helper.ColorAttribLocation);
+            }
+            if (((MeshImp)mr).NormalBufferObject != 0)
+            {
+                GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+                GL.DisableVertexAttribArray(Helper.NormalAttribLocation);
+            }
+            if (((MeshImp)mr).UVBufferObject != 0)
+            {
+                GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+                GL.DisableVertexAttribArray(Helper.UvAttribLocation);
+            }
+        }
+
+        /// <summary>
         /// Draws a Debug Line in 3D Space by using a start and end point (float3).
         /// </summary>
         /// <param name="start">The startpoint of the DebugLine.</param>
@@ -1290,6 +1669,15 @@ namespace Fusee.Engine.Imp.Graphics.Desktop
         public IMeshImp CreateMeshImp()
         {
             return new MeshImp();
+        }
+
+        /// <summary>
+        /// Creates an instance of attributes instance.
+        /// </summary>
+        /// <returns>The <see cref="IInstanceAttributesImp"/> instance.</returns>
+        public IInstanceAttributesImp CreateInstanceAttrImp()
+        {
+            return new InstanceAttributesImp();
         }
 
         internal static BlendEquationMode BlendOperationToOgl(BlendOperation bo)

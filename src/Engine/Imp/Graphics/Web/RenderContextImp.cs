@@ -239,6 +239,17 @@ namespace Fusee.Engine.Imp.Graphics.Web
             throw new System.NotImplementedException();
         }
 
+
+        public void RenderAsPoints(IInstanceAttributesImp ia, int count)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public void RenderAsInstance(IMeshImp meshImp, IInstanceAttributesImp ia, int count)
+        {
+            throw new System.NotImplementedException();
+        }
+
         [JSExternal]
         public void GetBufferContent(Rectangle quad, ITexture texId)
         {
@@ -247,6 +258,11 @@ namespace Fusee.Engine.Imp.Graphics.Web
 
         [JSExternal]
         public IMeshImp CreateMeshImp()
+        {
+            throw new System.NotImplementedException();
+        }
+        
+        public IInstanceAttributesImp CreateInstanceAttrImp()
         {
             throw new System.NotImplementedException();
         }
@@ -307,6 +323,36 @@ namespace Fusee.Engine.Imp.Graphics.Web
 
         [JSExternal]
         public void SetVertices(IMeshImp mesh, float3[] vertices)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public void SetInstanceAttributes(IInstanceAttributesImp ia, List<float3> allData, int arrayOffset = 0)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public void SetVerticesDynamically(IMeshImp mesh, int offset, List<float3> vertices)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public void SetNormalsDynamically(IMeshImp mesh, int offset, List<float3> normals)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public void SetColorsDynamically(IMeshImp mesh, int offset, List<uint> colors)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public void SetUVsDynamically(IMeshImp mesh, int offset, List<float2> uvs)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public void SetTrianglesDynamically(IMeshImp mesh, int offset, List<ushort> triangles)
         {
             throw new System.NotImplementedException();
         }
