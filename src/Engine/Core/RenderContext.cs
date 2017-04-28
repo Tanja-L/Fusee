@@ -1588,21 +1588,21 @@ namespace Fusee.Engine.Core
         /// <summary>
         /// Renders the vertices stored in the instance attributes.
         /// </summary>
-        /// <param name="attribHandle">Holds the vertex buffer object.</param>
-        public void RenderAsPoints(InstanceAttributes ia)
+        /// <param name="da">Instance of a dynamic attributes class.</param>
+        public void RenderAsPoints(DynamicAttributes da)
         {
-            if (ia._iaImp == null)
-                ia._iaImp = _rci.CreateInstanceAttrImp();
+            if (da._attribImp == null)
+                da._attribImp = _rci.CreateAttribImp();
 
-            if (ia.HasChanged())
+            if (da.HasChanged())
             {
-                _rci.SetInstanceAttributes(ia._iaImp, ia.GetOffsets(), ia.GetIndexOfLastChanges());
-                ia.Update();
+                _rci.SetAttributes(da._attribImp, da.GetOffsets(), da.GetIndexOfLastChanges(), da.GetMaximumNumberOfElements());
+                da.Update();
             }
 
             // --- 3. Render Instance with attributes
 
-            _rci.RenderAsPoints(ia._iaImp, ia.GetCount());
+            _rci.RenderAsPoints(da._attribImp, da.GetCount());
         }
 
         /// <summary>
@@ -1610,7 +1610,7 @@ namespace Fusee.Engine.Core
         /// </summary>
         /// <param name="m">The mesh that should be rendered.</param>
         /// <param name="ia">Object which defines how each instance of the mesh should be rendered.</param>
-        public void RenderAsInstance(Mesh m, InstanceAttributes ia)
+        public void RenderAsInstance(Mesh m, DynamicAttributes da)
         {
             // --- 1. Initialize mesh if needed
 
@@ -1640,18 +1640,18 @@ namespace Fusee.Engine.Core
 
             // --- 2. Initialize instance attributes if needed
 
-            if (ia._iaImp == null)
-                ia._iaImp = _rci.CreateInstanceAttrImp();
+            if (da._attribImp == null)
+                da._attribImp = _rci.CreateAttribImp();
 
-            if (ia.HasChanged())
+            if (da.HasChanged())
             {
-                _rci.SetInstanceAttributes(ia._iaImp, ia.GetOffsets(), ia.GetIndexOfLastChanges());
-                ia.Update();
+                _rci.SetAttributes(da._attribImp, da.GetOffsets(), da.GetIndexOfLastChanges(), da.GetMaximumNumberOfElements());
+                da.Update();
             }
 
             // --- 3. Render Instance with attributes
 
-            _rci.RenderAsInstance(m._meshImp, ia._iaImp, ia.GetCount());
+            _rci.RenderAsInstance(m._meshImp, da._attribImp, da.GetCount());
         }
 
         #endregion

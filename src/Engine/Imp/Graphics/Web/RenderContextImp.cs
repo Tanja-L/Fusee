@@ -240,12 +240,12 @@ namespace Fusee.Engine.Imp.Graphics.Web
         }
 
 
-        public void RenderAsPoints(IInstanceAttributesImp ia, int count)
+        public void RenderAsPoints(IAttribImp attribImp, int count)
         {
             throw new System.NotImplementedException();
         }
 
-        public void RenderAsInstance(IMeshImp meshImp, IInstanceAttributesImp ia, int count)
+        public void RenderAsInstance(IMeshImp meshImp, IAttribImp attribImp, int count)
         {
             throw new System.NotImplementedException();
         }
@@ -262,7 +262,7 @@ namespace Fusee.Engine.Imp.Graphics.Web
             throw new System.NotImplementedException();
         }
         
-        public IInstanceAttributesImp CreateInstanceAttrImp()
+        public IAttribImp CreateAttribImp()
         {
             throw new System.NotImplementedException();
         }
@@ -327,7 +327,7 @@ namespace Fusee.Engine.Imp.Graphics.Web
             throw new System.NotImplementedException();
         }
 
-        public void SetInstanceAttributes(IInstanceAttributesImp ia, List<float3> allData, int arrayOffset = 0)
+        public void SetAttributes(IAttribImp attribImp, List<float3> allData, int arrayOffset = 0, int maxElements = -1)
         {
             throw new System.NotImplementedException();
         }

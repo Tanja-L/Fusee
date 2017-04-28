@@ -83,7 +83,6 @@
     <Compile Include="IGeneric6DofConstraintImp.cs" />
     <Compile Include="IGImpactMeshShapeImp.cs" />
     <Compile Include="IHingeConstraintImp.cs" />
-    <Compile Include="IInstanceAttributesImp.cs" />
     <Compile Include="IMeshImp.cs" />
     <Compile Include="IMultiSphereShapeImp.cs" />
     <Compile Include="INetworkConnection.cs" />

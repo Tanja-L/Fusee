@@ -10,7 +10,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)Font.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)InstanceAttributesImp.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)MeshImp.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ShaderParam.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ShaderProgramImp.cs" />

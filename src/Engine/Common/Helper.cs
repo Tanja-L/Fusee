@@ -43,7 +43,7 @@
          /// <summary>
          /// The instance attribute name
          /// </summary>
-         public static readonly string OffsetAttribName = "fuOffset";
+         public static readonly string InstanceAttribName = "fuInstance";
 
         /// <summary>
         /// The vertex attribute location index.
@@ -80,7 +80,7 @@
          /// <summary>
          /// The instance attribute location index.
          /// </summary>
-         public static readonly int OffsetAttribLocation = 8;
+         public static readonly int InstanceAttribLocation = 8;
 
         #endregion
     }

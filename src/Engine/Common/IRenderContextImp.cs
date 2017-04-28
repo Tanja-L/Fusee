@@ -291,7 +291,8 @@ namespace Fusee.Engine.Common
         /// <param name="ia">The attribute which holds the buffer object id.</param>
         /// <param name="allData">The complete list of data, not only the lastly added ones.</param>
         /// <param name="arrayOffset">A pointer index to the place where new data is stored.</param>
-        void SetInstanceAttributes(IInstanceAttributesImp ia, List<float3> allData, int arrayOffset = 0);
+        /// /// <param name="maxElements">if the maximum number of elements, which the buffer should store is already known, you can pass it here for better performance.</param>
+        void SetAttributes(IAttribImp ia, List<float3> allData, int arrayOffset = 0, int maxElements = -1);
 
         /// <summary>
         /// Binds the vertices onto the GL Rendercontext and assigns an VertexBuffer index to the passed <see cref="IMeshImp" /> instance.
@@ -440,17 +441,17 @@ namespace Fusee.Engine.Common
         /// <summary>
         /// Renders multiple points, considering the vertices stored in attribHandle.
         /// </summary>
-        /// <param name="attribHandle">Holds the buffer object where vertices are stored.</param>
+        /// <param name="attribImp">Holds the buffer object where vertices are stored.</param>
         /// <param name="count">Specifies the number of points to be rendered.</param>
-        void RenderAsPoints(IInstanceAttributesImp ia, int count);
+        void RenderAsPoints(IAttribImp attribImp, int count);
 
         /// <summary>
         /// Same as Render, but with a different function: glDrawElementsInstanced().
         /// </summary>
         /// <param name="meshImp">The mesh that should be rendered.</param>
-        /// <param name="ia">The attribute that should be provided for each instance.</param>
+        /// <param name="attribImp">The attribute that should be provided for each instance.</param>
         /// <param name="count">The number of instances to render.</param>
-        void RenderAsInstance(IMeshImp meshImp, IInstanceAttributesImp ia, int count);
+        void RenderAsInstance(IMeshImp meshImp, IAttribImp attribImp, int count);
 
         /// <summary>
         /// Draws a Debug Line in 3D Space by using a start and end point (float3).
@@ -474,10 +475,10 @@ namespace Fusee.Engine.Common
         IMeshImp CreateMeshImp();
 
         /// <summary>
-        /// Creates an instance of attributes instance.
+        /// Creates an instance of attributes.
         /// </summary>
-        /// <returns>The <see cref="IInstanceAttributesImp"/> instance.</returns>
-        IInstanceAttributesImp CreateInstanceAttrImp();
+        /// <returns>The <see cref="IAttribImp"/> instance.</returns>
+        IAttribImp CreateAttribImp();
 
         /// <summary>
         /// Sets the specified render state to the given setting.

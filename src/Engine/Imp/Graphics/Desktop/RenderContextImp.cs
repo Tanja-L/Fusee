@@ -760,7 +760,7 @@ namespace Fusee.Engine.Imp.Graphics.Desktop
             GL.BindAttribLocation(program, Helper.BoneIndexAttribLocation, Helper.BoneIndexAttribName);
             GL.BindAttribLocation(program, Helper.BoneWeightAttribLocation, Helper.BoneWeightAttribName);
             GL.BindAttribLocation(program, Helper.BitangentAttribLocation, Helper.BitangentAttribName);
-            GL.BindAttribLocation(program, Helper.OffsetAttribLocation, Helper.OffsetAttribName);
+            GL.BindAttribLocation(program, Helper.InstanceAttribLocation, Helper.InstanceAttribName);
 
             GL.LinkProgram(program); // AAAARRRRRGGGGHHHH!!!! Must be called AFTER BindAttribLocation
             return new ShaderProgramImp {Program = program};
@@ -839,10 +839,11 @@ namespace Fusee.Engine.Imp.Graphics.Desktop
         /// <summary>
         /// Should allocate memory for the specified attribute, and be able to perform it dynamically via glBufferSubData.
         /// </summary>
-        /// <param name="ia">The attribute which holds the buffer object id.</param>
+        /// <param name="attribImp">The attribute which holds the buffer object id.</param>
         /// <param name="allData">The complete list of data, not only the lastly added ones.</param>
         /// <param name="arrayOffset">A pointer index to the place where new data is stored.</param>
-        public void SetInstanceAttributes(IInstanceAttributesImp ia, List<float3> allData, int arrayOffset = 0)
+        /// <param name="maxElements">if the maximum number of elements, which the buffer should store is already known, you can pass it here for better performance.</param>
+        public void SetAttributes(IAttribImp attribImp, List<float3> allData, int arrayOffset = 0, int maxElements = -1)
         {
             /*
             if (data == null || data.Length == 0)
@@ -852,12 +853,12 @@ namespace Fusee.Engine.Imp.Graphics.Desktop
 
             // create buffer if needed
 
-            if (((InstanceAttributesImp)ia).OffsetBufferObject == 0)
-                GL.GenBuffers(1, out ((InstanceAttributesImp)ia).OffsetBufferObject);
+            if (((AttributeImp)attribImp).AttributeBufferObject == 0)
+                GL.GenBuffers(1, out ((AttributeImp)attribImp).AttributeBufferObject);
 
             // set target to buffer object
 
-            GL.BindBuffer(BufferTarget.ArrayBuffer, ((InstanceAttributesImp)ia).OffsetBufferObject);
+            GL.BindBuffer(BufferTarget.ArrayBuffer, ((AttributeImp)attribImp).AttributeBufferObject);
 
             // does memory need to be reallocated?
 
@@ -869,7 +870,11 @@ namespace Fusee.Engine.Imp.Graphics.Desktop
 
             if (bufferSize == 0)
             {
-                GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr)(dataSize * 1.5f), (IntPtr)null, BufferUsageHint.DynamicDraw);
+                if(maxElements != -1)
+                    GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr)(maxElements * 3 * sizeof(float)), (IntPtr)null, BufferUsageHint.DynamicDraw);
+                else
+                    GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr)(dataSize * 1.5f), (IntPtr)null, BufferUsageHint.DynamicDraw);
+
                 GL.BufferSubData(BufferTarget.ArrayBuffer, (IntPtr)0, fullDataSize, allData.ToArray());
             }
             else if (fullDataSize > bufferSize)
@@ -1529,12 +1534,12 @@ namespace Fusee.Engine.Imp.Graphics.Desktop
         /// <summary>
         /// Renders multiple points, considering the vertices stored in attribHandle.
         /// </summary>
-        /// <param name="attribHandle">Holds the buffer object where vertices are stored.</param>
+        /// <param name="attribImp">Holds the buffer object where vertices are stored.</param>
         /// <param name="count">Specifies the number of points to be rendered.</param>
-        public void RenderAsPoints(IInstanceAttributesImp ia, int count)
+        public void RenderAsPoints(IAttribImp attribImp, int count)
         {
             GL.EnableVertexAttribArray(Helper.VertexAttribLocation);
-            GL.BindBuffer(BufferTarget.ArrayBuffer, ((InstanceAttributesImp)ia).OffsetBufferObject);
+            GL.BindBuffer(BufferTarget.ArrayBuffer, ((AttributeImp)attribImp).AttributeBufferObject);
             GL.VertexAttribPointer(Helper.VertexAttribLocation, 3, VertexAttribPointerType.Float, false, 0,
                 IntPtr.Zero);
             
@@ -1550,15 +1555,15 @@ namespace Fusee.Engine.Imp.Graphics.Desktop
         /// <param name="meshImp">The mesh that should be rendered.</param>
         /// <param name="ia">The attribute that should be provided for each instance.</param>
         /// <param name="count">The number of instances to render.</param>
-        public void RenderAsInstance(IMeshImp mr, IInstanceAttributesImp ia, int count)
+        public void RenderAsInstance(IMeshImp mr, IAttribImp attribImp, int count)
         {
-            if (((InstanceAttributesImp)ia).OffsetBufferObject != 0)
+            if (((AttributeImp)attribImp).AttributeBufferObject != 0)
             {
-                GL.EnableVertexAttribArray(Helper.OffsetAttribLocation);
-                GL.BindBuffer(BufferTarget.ArrayBuffer, ((InstanceAttributesImp)ia).OffsetBufferObject);
-                GL.VertexAttribPointer(Helper.OffsetAttribLocation, 3, VertexAttribPointerType.Float, false, 0,
+                GL.EnableVertexAttribArray(Helper.InstanceAttribLocation);
+                GL.BindBuffer(BufferTarget.ArrayBuffer, ((AttributeImp)attribImp).AttributeBufferObject);
+                GL.VertexAttribPointer(Helper.InstanceAttribLocation, 3, VertexAttribPointerType.Float, false, 0,
                     IntPtr.Zero);
-                GL.VertexAttribDivisor(Helper.OffsetAttribLocation, 1);
+                GL.VertexAttribDivisor(Helper.InstanceAttribLocation, 1);
             }
             if (((MeshImp)mr).VertexBufferObject != 0)
             {
@@ -1609,10 +1614,10 @@ namespace Fusee.Engine.Imp.Graphics.Desktop
                 GL.DrawElementsInstanced(BeginMode.Triangles, ((MeshImp)mr).NElements, DrawElementsType.UnsignedShort, IntPtr.Zero, count);
                 //GL.DrawArrays(GL.Enums.BeginMode.POINTS, 0, shape.Vertices.Length);
             }
-            if (((InstanceAttributesImp)ia).OffsetBufferObject != 0)
+            if (((AttributeImp)attribImp).AttributeBufferObject != 0)
             {
                 GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
-                GL.DisableVertexAttribArray(Helper.OffsetAttribLocation);
+                GL.DisableVertexAttribArray(Helper.InstanceAttribLocation);
             }
             if (((MeshImp)mr).VertexBufferObject != 0)
             {
@@ -1672,12 +1677,12 @@ namespace Fusee.Engine.Imp.Graphics.Desktop
         }
 
         /// <summary>
-        /// Creates an instance of attributes instance.
+        /// Creates an instance of attributes.
         /// </summary>
-        /// <returns>The <see cref="IInstanceAttributesImp"/> instance.</returns>
-        public IInstanceAttributesImp CreateInstanceAttrImp()
+        /// <returns>The <see cref="IAttribImp"/> instance.</returns>
+        public IAttribImp CreateAttribImp()
         {
-            return new InstanceAttributesImp();
+            return new AttributeImp();
         }
 
         internal static BlendEquationMode BlendOperationToOgl(BlendOperation bo)

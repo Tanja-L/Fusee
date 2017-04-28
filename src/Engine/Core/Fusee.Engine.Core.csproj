@@ -70,7 +70,7 @@
     <Compile Include="HingeConstraint.cs" />
     <Compile Include="Input.cs" />
     <Compile Include="InputDevice.cs" />
-    <Compile Include="InstanceAttributes.cs" />
+    <Compile Include="DynamicAttributes.cs" />
     <Compile Include="JometriMesh.cs" />
     <Compile Include="KeyboardDevice.cs" />
     <Compile Include="DynamicMesh.cs" />
